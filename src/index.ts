@@ -1,8 +1,22 @@
 import express, { Request, Response } from "express";
 import { randomUUID } from "crypto";
+import mysql from "mysql2/promise";
 
 const app = express();
 const port = 3002;
+
+const getConnection = () => {
+  // Create the connection to database
+  return mysql.createConnection({
+    host: "localhost",
+    user: "root",
+    database: "TestDB",
+    password: "vincent1",
+    port: 3306,
+  });
+};
+
+
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -31,7 +45,19 @@ app.get("/todos", (req: Request, res: Response) => {
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Methods", "GET, POST, DELETE");
   res.header("Access-Control-Allow-Headers", "*");
-  res.json(todos);
+  getConnection()
+  .then((conn) => conn.query("SELECT * FROM `Todos`;"))
+  .then(([rows, fields]) => {
+    // rows contains the result of the query
+    // fields contains information about the returned results, such as column types
+    console.log(rows); // rows contains the result of the query
+    console.log(fields); // fields contains information about the returned results, such as column types
+    res.json(rows);
+  })
+  .catch((err: any) => {
+    console.error(err);
+    res.status(500).send("Error connecting to the database");
+  });
 });
 
 app.get("/", (req: Request, res: Response) => {
